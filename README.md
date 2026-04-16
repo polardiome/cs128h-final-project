@@ -1,7 +1,8 @@
 # cs128h-final-project
 CS 128H Final Project
 
-Group Name: The Linkedminded Duo
+Group Name: The Likeminded Duo
+
 Member Names: Guy Sreesangkom (guys2), Jiho Seo (jihoseo2)
 
 Project Overview:
