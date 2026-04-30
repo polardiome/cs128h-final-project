@@ -26,6 +26,9 @@ fn game_round(round: i32, p1_score: &mut i32, p2_score: &mut i32) {
     let starting_player = if round % 2 != 0 { "Player 1" } else { "Player 2" };
     let guessing_player = if round % 2 == 0 { "Player 1" } else { "Player 2" };
 
+    if round == 1 {
+        println!("Welcome to Likeminded!\n");
+    }
     println!("Round {} of 10. {} chooses the guess word!\n", round.to_string(), starting_player);
 
     let mut lower_bound = String::new();
