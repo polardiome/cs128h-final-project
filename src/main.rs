@@ -1,35 +1,49 @@
 use rand::prelude::*;
 use std::thread;
 use std::time::Duration;
+use colored::Colorize;
 
 fn main(){
-    let mut p1_score = &mut 0;
-    let mut p2_score = &mut 0;
-    for round in 1..=4 {
-        game_round(round, p1_score, p2_score);
+    let total_score = &mut 0;
+    for round in 1..=10 {
+        game_round(round, total_score);
     }
     clearscreen::clear().unwrap();
     println!("Game over!\n");
-    println!("Player 1 earned {} points. Player 2 earned {} points.\n", p1_score.to_string(), p2_score.to_string());
-    if p1_score > p2_score {
-        println!("Player 1 wins!");
-    } else if p2_score > p1_score {
-        println!("Player 2 wins!");
+    let message = if *total_score == 0 {
+        "Not likeminded afterall..."
+    } else if *total_score < 10 {
+        "A little likeminded."
+    } else if *total_score < 20 {
+        "Quite likeminded."
+    } else if *total_score < 30 {
+        "Super likeminded."
     } else {
-        println!("It's a tie!");
-    }
+        "Perfect score!"
+    };
+    println!("{} points earned collectively. {}\n", total_score.to_string(), message);
+    
 }
 
-fn game_round(round: i32, p1_score: &mut i32, p2_score: &mut i32) {
+fn game_round(round: i32, total_score: &mut i32) {
     clearscreen::clear().unwrap();
 
-    let starting_player = if round % 2 != 0 { "Player 1" } else { "Player 2" };
-    let guessing_player = if round % 2 == 0 { "Player 1" } else { "Player 2" };
+    let starting_player = if round % 2 != 0 { "Player 1".bold().red() } else { "Player 2".bold().blue() };
+    let guessing_player = if round % 2 == 0 { "Player 1".bold().red() } else { "Player 2".bold().blue() };
 
     if round == 1 {
-        println!("Welcome to Likeminded!\n");
+        println!("{}", "Welcome to Likeminded!\n".bold());
     }
-    println!("Round {} of 10. {} chooses the guess word!\n", round.to_string(), starting_player);
+    
+    let mut rng = rand::thread_rng();  
+    let bonus: i32 = rng.gen_range(1..=6);
+
+    if bonus == 1 {
+        println!("Round {} of 10. {}\n", round.to_string(), "DOUBLE POINTS!!!".bold().purple());
+    } else {
+        println!("Round {} of 10.\n", round.to_string(),);
+    }
+    println!("Choose the guess word, {}!\n", starting_player);
 
     let mut lower_bound = String::new();
     println!("Describe the lower bound:");
@@ -43,11 +57,14 @@ fn game_round(round: i32, p1_score: &mut i32, p2_score: &mut i32) {
     upper_bound = upper_bound.trim().to_string();
     println!();
 
-    let mut rng = rand::thread_rng();
     let target: i32 = rng.gen_range(0..=9);
     println!("Your target number is... {}\n", target);
     let filled_scale = format!("{} 0 {}{} 9 {}", lower_bound, "█".repeat((target * 2) as usize), "░".repeat(18 - ((target * 2) as usize)), upper_bound);
-    let arrow = format!("{}▲", " ".repeat(lower_bound.chars().count() + ((target * 2) as usize) + 2));
+    let arrow = if round % 2 != 0 {
+        format!("{}{}", " ".repeat(lower_bound.chars().count() + ((target * 2) as usize) + 2), "▲".red())
+    } else {
+        format!("{}{}", " ".repeat(lower_bound.chars().count() + ((target * 2) as usize) + 2), "▲".blue())
+    };
     let label = format!("{}{}", " ".repeat(lower_bound.chars().count() + ((target * 2) as usize) + 2), target.to_string());
     println!("{}\n{}\n{}\n", filled_scale, arrow, label);
 
@@ -59,7 +76,7 @@ fn game_round(round: i32, p1_score: &mut i32, p2_score: &mut i32) {
 
     clearscreen::clear().unwrap();
     
-    println!("{} guesses! The guess word is... {}\n", guessing_player, guess_word);
+    println!("Make your guess, {}! The guess word is... {}\n", guessing_player, guess_word);
     let empty_scale = format!("{} 0 {} 9 {}", lower_bound, "░".repeat(18), upper_bound);
     println!("{}\n", empty_scale);
     println!("Enter your guess:");
@@ -81,23 +98,33 @@ fn game_round(round: i32, p1_score: &mut i32, p2_score: &mut i32) {
     if score < 0 {
         score = 0;
     }
-
-    if round % 2 == 0 { *p1_score += score; } else { *p2_score += score; }
+    if bonus == 1 {
+        score *= 2;
+    }
+    *total_score += score;
 
     for i in (1..=5).rev() {
         clearscreen::clear().unwrap(); 
-        let message = if (round < 4) { format!("{} earns {} points. Next round in", guessing_player, score) } else { format!("{} earns {} points. Game ending in", guessing_player, score) };
+        let message = if round < 4 { format!("{} points earned this round. Next round in", score) } else { format!("{} points earned this round. Game ending in", score) };
         if i > 1 {
             println!("{} {} seconds...\n", message, i.to_string());
         } else {
             println!("{} 1 second...\n", message);
         }
-        let target_arrow = format!("{}▼", " ".repeat(lower_bound.chars().count() + ((target * 2) as usize) + 2));
+        let target_arrow = if round % 2 != 0 {
+            format!("{}{}", " ".repeat(lower_bound.chars().count() + ((target * 2) as usize) + 2), "▼".red())
+        } else {
+            format!("{}{}", " ".repeat(lower_bound.chars().count() + ((target * 2) as usize) + 2), "▼".blue())
+        };
         let target_label = format!("{}{}", " ".repeat(lower_bound.chars().count() + ((target * 2) as usize) + 2), target.to_string());
-        let guess_arrow = format!("{}▲", " ".repeat(lower_bound.chars().count() + ((guess * 2) as usize) + 2));
+        let guess_arrow = if round % 2 != 0 {
+            format!("{}{}", " ".repeat(lower_bound.chars().count() + ((guess * 2) as usize) + 2), "▲".blue())
+        } else {
+            format!("{}{}", " ".repeat(lower_bound.chars().count() + ((guess * 2) as usize) + 2), "▲".red())
+        };
         let guess_label = format!("{}{}", " ".repeat(lower_bound.chars().count() + ((guess * 2) as usize) + 2), guess.to_string());
         println!("{}\n{}\n{}\n{}\n{}\n", target_label, target_arrow, filled_scale, guess_arrow, guess_label);
-        println!("Player 1 has {} points. Player 2 has {} points.\n", p1_score.to_string(), p2_score.to_string());
+        println!("{} points earned collectively.", total_score.to_string());
         thread::sleep(Duration::from_secs(1));
     }
 }
